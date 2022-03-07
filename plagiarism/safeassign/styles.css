@@ -1,0 +1,43 @@
+#page-admin-plagiarism-safeassign-settings input[type="text"]:not(#id_safeassign_curlcache_number),
+#page-admin-plagiarism-safeassign-settings #id_safeassign_timezone,
+#page-admin-plagiarism-safeassign-settings #id_safeassign_api,
+#page-admin-plagiarism-safeassign-settings #id_safeassign_additional_roles {
+    width: 21em;
+}
+
+#page-admin-plagiarism-safeassign-settings #instructor_credentials p,
+#student_credentials p {
+    display: inline-block;
+}
+
+#page-admin-plagiarism-safeassign-settings .modal-footer {
+    display: none;
+}
+
+#page-admin-plagiarism-safeassign-settings .licensestatement {
+    overflow-y: scroll;
+    max-height: 250px;
+}
+
+#page-mod-assign-editsubmission input[type=checkbox] {
+    margin-right: .25rem;
+}
+
+#page-mod-assign-editsubmission .row {
+    margin-left: 0;
+}
+
+#page-mod-assign-editsubmission .col-md-3 {
+    padding-left: 0;
+}
+
+/**
+ * Styles for Open Grader (local_joulegrader)
+ */
+#page-local-joulegrader-view .plagiarism-inline {
+    display: inline-flex;
+}
+
+#page-local-joulegrader-view .plagiarism-inline a {
+    padding-left: .5em;
+}

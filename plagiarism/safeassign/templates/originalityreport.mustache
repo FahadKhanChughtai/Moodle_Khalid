@@ -1,0 +1,158 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template plagiarism_safeassign/originalityreport
+
+    Moodle modal template for SafeAssign originality report.
+
+    The purpose of this template is to render the originality report with an additional JS module.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * none
+
+    Context variables required for this template:
+    * uuid
+    * courseid
+    * wwwroot
+    * sesskey
+
+    Example context (json):
+    {
+        "content": "... Originality report html ...",
+        "uuid": "abcdefghijklmnopqrstyvwxyz",
+        "courseid": 100,
+        "wwwroot": "http://mymoodle.com"
+    }
+}}
+
+{{{content}}}
+
+<script type="text/javascript">
+    // Had to manually add this because Moodle libraries are unavailable.
+    // SafeAssign's originality report is an external page.
+    // This will be executed after the page is loaded.
+    var decorateOriginalityReport = function() {
+        var self = this;
+
+        var uuid = '{{{uuid}}}',
+            courseID = '{{{courseid}}}',
+            wwwroot = '{{{wwwroot}}}';
+
+        /**
+         * Replaces the file links with the moodle wrapped version.
+         * This works in the old report only.
+         */
+        self.replaceLinks = function() {
+            var fileLinks = document.querySelectorAll('.attachments-list a');
+
+            fileLinks.forEach(function(fileLink) {
+                var url = fileLink.getAttribute('href');
+                var query = self.getQuery(url);
+                var fileuuid = query.file_uuid;
+                var force = query.force;
+                fileLink.setAttribute('href', wwwroot + '/plagiarism/safeassign/view.php?' +
+                        'courseid=' + courseID +
+                        '&uuid=' + uuid +
+                        '&fileuuid=' + fileuuid +
+                        '&force=' + force);
+            });
+        };
+
+        /**
+         * Builds an object which contains all the parameters passed in a URL.
+         * @param url URL which has parameters
+         * @returns {Object}
+         */
+        self.getQuery = function(url) {
+            var query = {};
+
+            url.replace(/[?&](.+?)=([^&#]*)/g, function (_, key, value) {
+                query[key] = decodeURI(value).replace(/\+/g, ' ');
+            });
+
+            return query;
+        };
+
+        /**
+         * Add event listeners to the resubmit events.
+         * This will let Moodle know about the resubmission so it processes the scores again.
+         */
+        self.addEventToResubmit = function() {
+            // Build request to send ack.
+            var request = self.buildAckRequest();
+            // Add callback to resubmit event.
+            document.safeassign.onResubmit(function() {
+                // Submit ack without waiting for response.
+                request.send();
+            });
+        };
+
+        /**
+         * Replaces the link that points towards the old originality report, if found.
+         */
+        self.replaceOldOriginalityLink = function() {
+            var oldReportLink = document.querySelector('a.report-button');
+
+            if (oldReportLink) {
+                var url = oldReportLink.getAttribute('href');
+                var query = self.getQuery(url);
+                var fileuuid = query.file_uuid;
+                oldReportLink.setAttribute('href', wwwroot + '/plagiarism/safeassign/view.php?' +
+                        'courseid=' + courseID +
+                        '&uuid=' + uuid +
+                        '&fileuuid=' + fileuuid +
+                        '&force=true');
+            }
+        };
+
+        /**
+         * Builds a request that allows Moodle to acknowledge that a resubmit has been requested.
+         * It does now wait for a response since this is a "silent" listener that does not interfere with the report.
+         * Best case scenario, if this request is not processed, the report should be rebuilt fast enough.
+         * @return XMLHttpRequest
+         */
+        self.buildAckRequest = function() {
+            var request = new XMLHttpRequest();
+            request.open('GET', wwwroot + '/plagiarism/safeassign/view.php?controller=resubmit_ack&action=ack&uuid=' + uuid);
+            request.setRequestHeader('Content-Type', 'application/json');
+            request.onload = function () {
+                window.close();
+            };
+            return request;
+        };
+
+        /**
+         * Init function.
+         */
+        self.init = function() {
+            self.replaceOldOriginalityLink();
+            self.replaceLinks();
+            self.addEventToResubmit();
+        };
+
+        // This kick-starts the whole process.
+        self.init();
+    };
+
+    document.addEventListener("DOMContentLoaded", decorateOriginalityReport);
+</script>
+
+
+
